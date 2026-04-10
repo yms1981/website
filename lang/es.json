@@ -229,7 +229,20 @@
     "updated_badge": "Actualizado",
     "badge_total": "Total",
     "badge_assigned": "Asignado",
-    "mobile_order_hint": "Pedido desde la app"
+    "mobile_order_hint": "Pedido desde la app",
+    "actions": "Acciones",
+    "btn_view": "Visualizar",
+    "btn_pay": "Pago",
+    "modal_products_title": "Productos del pedido",
+    "modal_order_total": "Total del pedido",
+    "loading_lines": "Cargando…",
+    "lines_load_error": "No se pudieron cargar las líneas del pedido.",
+    "pay_open_link": "Pagar en línea",
+    "pay_modal_title": "Pago",
+    "pay_modal_intro": "Pedido {number} — total {total}.",
+    "pay_wa_hint": "Contáctenos por WhatsApp para coordinar el pago de este pedido.",
+    "pay_wa_button": "Abrir WhatsApp",
+    "pay_wa_text": "Hola, quiero pagar el pedido {number} ({total})."
   },
   "order_detail": {
     "title": "Detalle del pedido",
@@ -309,6 +322,88 @@
     "success": "¡Mensaje enviado! Nos pondremos en contacto pronto.",
     "phone_label": "Teléfono",
     "email_label": "Correo"
+  },
+  "support_assistant": {
+    "fab_aria": "Ayuda y soporte",
+    "panel_title": "Asistente de soporte",
+    "close_aria": "Cerrar",
+    "greeting": "Hola, ¿en qué podemos ayudarte?",
+    "greeting_named": "Hola {name}, ¿en qué podemos ayudarte?",
+    "intro": "Puedo orientarte sobre el portal (catálogo, pedidos, stock, facturas, mensajes) con datos de tu sesión. También puedes **Hablar con soporte** para que el equipo responda por correo.",
+    "chip_orders": "Pedidos y facturas",
+    "chip_catalog": "Catálogo y precios",
+    "chip_human": "Hablar con soporte",
+    "reply_orders": "Puedes ver tus pedidos en **Cuenta → Pedidos**. Para pagos o cambios, usa **Hablar con soporte** y avisaremos al equipo por correo.",
+    "reply_catalog": "Navega el catálogo iniciado sesión para ver tus precios. Usa los filtros a la izquierda. ¿Cotización especial? Pulsa **Hablar con soporte**.",
+    "reply_human_prompt": "Describe brevemente tu consulta. Al enviarla notificamos al equipo al correo configurado.",
+    "placeholder_issue": "Describe tu pregunta o problema…",
+    "placeholder_ask": "Pregunta lo que quieras: pedidos, categorías, stock, saldo…",
+    "btn_ask": "Preguntar",
+    "btn_send_team": "Enviar al equipo de soporte",
+    "btn_send": "Enviar",
+    "toast_sent": "Tu mensaje fue enviado. Te contactaremos pronto.",
+    "toast_error": "No se pudo enviar. Intenta más tarde.",
+    "empty_message": "Escribe un mensaje antes de enviar.",
+    "empty_ask": "Escribe una pregunta antes de enviar.",
+    "toast_context_error": "No se pudo cargar la información de tu cuenta. Prueba de nuevo.",
+    "bot_name": "Asistente",
+    "doc_sections": [
+      {
+        "title": "Qué es este portal",
+        "body": "Es el área **mayorista** tras iniciar sesión: ves **precios y condiciones** propias de tu cuenta. Desde **Cuenta** accedes al **catálogo**, **carrito**, **pedidos**, **facturas** y **mensajes** con tu empresa. El sitio público sin sesión no muestra precios de mayorista."
+      },
+      {
+        "title": "Catálogo y precios",
+        "body": "En **Cuenta → Catálogo** ves productos activos con **tu precio**. La columna izquierda lista **categorías**; al elegir una se filtran los artículos. Puedes buscar por nombre o SKU según lo que muestre la pantalla. Los precios dependen de tu **grupo**, **descuento** o reglas que aplique la empresa (sincronizadas con FullVendor)."
+      },
+      {
+        "title": "Stock e inventario",
+        "body": "Si la empresa tiene activada la **visibilidad de inventario**, verás cantidades o textos de stock en el catálogo. Si está desactivada, puede no mostrarse el número exacto aunque el producto esté disponible para pedir. “Sin stock” o cantidad 0 significa que según los datos actuales no hay disponible; confirma con pedido o con soporte si el artículo es crítico."
+      },
+      {
+        "title": "Carrito y envío del pedido",
+        "body": "Añades líneas al **carrito** (versión principal en **Cuenta → Carrito** según configuración del sitio). Revisa cantidades y notas. Al confirmar, el pedido se registra según el flujo del portal (FullVendor / base de datos). Dudas sobre plazos o transporte: **Hablar con soporte**."
+      },
+      {
+        "title": "Pedidos y detalle",
+        "body": "**Cuenta → Pedidos** lista tus órdenes. Puedes abrir el **detalle** de una orden para ver líneas, totales y estado. Los estados y textos vienen del sistema de la empresa. Cambios después de confirmar (anular, modificar cantidades) suelen requerir **soporte humano**."
+      },
+      {
+        "title": "Facturas",
+        "body": "**Cuenta → Facturas** concentra documentos de cobro o PDF según lo que haya integrado la empresa. Si no ves una factura esperada, puede no estar cargada aún o no aplicar a tu cuenta; pregunta por **Hablar con soporte**."
+      },
+      {
+        "title": "Mensajes",
+        "body": "**Cuenta → Mensajes** es el chat interno con tu equipo o vendedores: adjuntos, notas y conversaciones por hilo. No sustituye al correo formal de reclamaciones legales, pero agiliza dudas operativas."
+      },
+      {
+        "title": "Saldo, deuda y condiciones",
+        "body": "Si tu ficha de cliente está sincronizada en la base local del portal, puede mostrarse un **balance** o condición de pago (**término / grupo**). Ese valor es **orientativo** y depende de la última sincronización; el estado de cuenta oficial y límites de crédito los confirma **administración / soporte**."
+      },
+      {
+        "title": "Límites del asistente automático",
+        "body": "Este asistente **no** es un modelo de IA externo: combina **textos de ayuda** con **datos de tu sesión** (pedidos en base, categorías, conteos de stock en catálogo si cargamos productos). No ejecuta cambios en pedidos ni pagos. Para casos sensibles usa **Hablar con soporte** y adjunta detalle."
+      }
+    ],
+    "dyn": {
+      "orders_intro_n": "En la base del portal tienes **{n}** pedido(s) asociados a tu cuenta.",
+      "orders_lines_header": "Últimos registrados:",
+      "order_line": "• **{num}** — {date} — *{status}*. Total: **{total}**.",
+      "orders_more": "El listado completo está en **Cuenta → Pedidos**: {url}",
+      "orders_none": "No aparecen pedidos en la base enlazada al portal. Si esperabas verlos, usa **Hablar con soporte**.",
+      "orders_no_db": "Los pedidos no están disponibles desde base de datos en este entorno; abre igualmente **Pedidos**: {url}",
+      "balance_line": "Último **balance** sincronizado en el portal: **{amount}**. Condición: **{term}**. Grupo: **{group}**.",
+      "balance_discount": "Descuento de cabecera en ficha (si aplica): **{disc}%**.",
+      "balance_unknown": "No hay saldo o términos en la ficha local sincronizada. Para estado de cuenta o límites, escribe a **Hablar con soporte**.",
+      "stock_on": "Tu empresa tiene **visibilidad de inventario** en el catálogo (cantidades o etiquetas cuando existan datos).",
+      "stock_off": "La empresa puede tener el **inventario oculto**; no verás cantidades exactas en todos los artículos.",
+      "category_pick": "Categorías (muestra): **{sample}**. Filtra en el catálogo: {url}",
+      "category_counts": "En la categoría **{name}**: **{total}** artículos en catálogo; **{inStock}** con stock > 0 y **{outStock}** en 0 o sin stock (según datos cargados).",
+      "category_not_found": "No identifiqué una categoría con ese nombre. Abre el catálogo y elige en la lista izquierda: {url}",
+      "products_error": "No pude cargar el catálogo de productos ahora. Entra a **Catálogo**: {url}",
+      "rag_title": "Guía del portal:",
+      "closing": "¿Necesitas que alguien del equipo actúe? **Hablar con soporte**."
+    }
   },
   "messaging": {
     "title": "Mensajes",

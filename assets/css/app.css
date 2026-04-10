@@ -1302,6 +1302,36 @@ input:focus, textarea:focus, button:focus { outline: 2px solid rgba(185,28,28,0.
   font-weight: 700;
   color: var(--gray-900);
 }
+/* Cantidad editable (catálogo / PDP): quitar flechas del input number */
+input.hv-qty-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+input.hv-qty-input[type="number"]::-webkit-outer-spin-button,
+input.hv-qty-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input.hv-pdp-qty__val.hv-qty-input {
+  width: 3.25rem;
+  max-width: 4.75rem;
+  margin: 0;
+  padding: 0.15rem 0.25rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem;
+  background: #fff;
+  font: inherit;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  text-align: center;
+  box-sizing: border-box;
+}
+input.hv-pdp-qty__val.hv-qty-input:focus {
+  outline: none;
+  border-color: #fecaca;
+  box-shadow: 0 0 0 2px rgba(254, 202, 202, 0.45);
+}
 .hv-pdp-qty__moq {
   margin: 0.5rem 0 0;
   font-size: 0.75rem;

@@ -14,7 +14,7 @@ if (class_exists('Auth', false)) {
     $hvSNav = Auth::getSession();
     if (is_array($hvSNav) && !empty($hvSNav['approved'])) {
         $hvRNav = (int) ($hvSNav['rolId'] ?? 0);
-        $hvShowMsgNav = ($hvRNav === 2 || $hvRNav === 3);
+        $hvShowMsgNav = ($hvRNav === 2 || $hvRNav === 3) && hv_show_messages_ui();
     }
 }
 ?>
@@ -59,12 +59,6 @@ if (class_exists('Auth', false)) {
           <span class="flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
             <?= e($dict['nav']['catalog']) ?>
-          </span>
-        </a>
-        <a href="<?= e($bp) ?>/<?= e($lang) ?>/contact" class="text-sm font-medium tracking-wide transition text-gray-500 hover:text-gray-900">
-          <span class="flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            <?= e($dict['nav']['contact']) ?>
           </span>
         </a>
         <span id="nav-auth-extra" class="hidden md:contents"></span>
@@ -151,6 +145,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var mextra = document.getElementById('hv-nav-mobile-extra');
   var ordersLabel = <?= json_encode($dict['nav']['orders'] ?? 'Orders') ?>;
   var messagesLabel = <?= json_encode($dict['nav']['messages'] ?? 'Messages') ?>;
+  var hvMessagesUiEnabled = <?= hv_show_messages_ui() ? 'true' : 'false' ?>;
 
   function makeLogoutButton() {
     var btn = document.createElement('button');
@@ -165,14 +160,14 @@ document.addEventListener('DOMContentLoaded', function () {
     loginGroups.forEach(function (el) { el.classList.add('hidden'); });
     cartLinks.forEach(function (el) { el.setAttribute('href', base + '/' + lang + '/account/cart'); });
     if (extra) {
-      var msgNav = (typeof window.HV_ROL !== 'undefined' && (window.HV_ROL === 2 || window.HV_ROL === 3))
+      var msgNav = (hvMessagesUiEnabled && typeof window.HV_ROL !== 'undefined' && (window.HV_ROL === 2 || window.HV_ROL === 3))
         ? '<a href="'+base+'/'+lang+'/account/messages" class="hv-messages-nav-trigger relative text-sm font-medium tracking-wide transition text-gray-500 hover:text-gray-900 inline-flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>'+messagesLabel+'<span data-hv-msg-badge class="absolute -top-1.5 -right-2 bg-emerald-600 text-white text-[9px] min-w-[16px] h-4 flex items-center justify-center rounded-full px-0.5 font-bold" style="display:none">0</span></a>' : '';
       extra.innerHTML = msgNav +
         '<a href="'+base+'/'+lang+'/account/orders" class="text-sm font-medium tracking-wide transition text-gray-500 hover:text-gray-900"><span class="flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>'+ordersLabel+'</span></a>';
       extra.classList.remove('hidden');
     }
     if (mextra) {
-      var msgM = (typeof window.HV_ROL !== 'undefined' && (window.HV_ROL === 2 || window.HV_ROL === 3))
+      var msgM = (hvMessagesUiEnabled && typeof window.HV_ROL !== 'undefined' && (window.HV_ROL === 2 || window.HV_ROL === 3))
         ? '<a href="'+base+'/'+lang+'/account/messages" class="hv-messages-nav-trigger relative flex items-center gap-3 py-3 px-3 rounded-xl text-base font-medium text-gray-800 hover:bg-gray-50"><svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>'+messagesLabel+'<span data-hv-msg-badge class="ml-auto bg-emerald-600 text-white text-xs min-w-[20px] h-5 flex items-center justify-center rounded-full px-1 font-bold" style="display:none">0</span></a>' : '';
       mextra.innerHTML = msgM +
         '<a href="'+base+'/'+lang+'/account/orders" class="flex items-center gap-3 py-3 px-3 rounded-xl text-base font-medium text-gray-800 hover:bg-gray-50"><svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>'+ordersLabel+'</a>';
@@ -241,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .catch(function () {});
   }
-  if (authApproved && typeof window.HV_ROL !== 'undefined' && (window.HV_ROL === 2 || window.HV_ROL === 3)) {
+  if (hvMessagesUiEnabled && authApproved && typeof window.HV_ROL !== 'undefined' && (window.HV_ROL === 2 || window.HV_ROL === 3)) {
     refreshMsgBadge();
     setInterval(refreshMsgBadge, 45000);
   }

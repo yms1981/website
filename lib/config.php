@@ -155,3 +155,15 @@ function whatsapp_business_number(): string
 {
     return config('WHATSAPP_BUSINESS_NUMBER', '17736812440');
 }
+
+/**
+ * Muestra enlaces al módulo de mensajes (nav, drawer) para vendedor/cliente.
+ * API y página /account/messages siguen activas; solo se oculta la UI de acceso.
+ * Activar: HV_SHOW_MESSAGES_UI=1 (u on/true/yes).
+ */
+function hv_show_messages_ui(): bool
+{
+    $v = strtolower(trim(config('HV_SHOW_MESSAGES_UI', '0')));
+
+    return in_array($v, ['1', 'true', 'yes', 'on'], true);
+}

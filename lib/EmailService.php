@@ -99,4 +99,41 @@ final class EmailService
 
         return self::send([require_env('ADMIN_EMAIL')], $subject, $html, $data['email']);
     }
+
+    /**
+     * Cliente mayorista (rol 3): solicitud de contacto con soporte humano vía asistente flotante.
+     *
+     * @param array{
+     *   customerName:string,
+     *   customerEmail:string,
+     *   customerFvId:int,
+     *   lang:string,
+     *   pageUrl:string,
+     *   message:string
+     * } $data
+     */
+    public static function sendWholesaleSupportEscalation(array $data): bool
+    {
+        $name = self::escape((string) ($data['customerName'] ?? ''));
+        $email = self::escape((string) ($data['customerEmail'] ?? ''));
+        $fvId = (int) ($data['customerFvId'] ?? 0);
+        $lang = self::escape((string) ($data['lang'] ?? ''));
+        $page = self::escape((string) ($data['pageUrl'] ?? ''));
+        $msg = nl2br(self::escape((string) ($data['message'] ?? '')));
+
+        $subject = '[Home Value] Wholesale support request — ' . (string) ($data['customerName'] ?? 'customer');
+        $html = '<h2>Wholesale customer requested support</h2>'
+            . '<table style="border-collapse:collapse;max-width:560px;">'
+            . '<tr><td style="padding:6px 0;font-weight:bold;">Name</td><td>' . $name . '</td></tr>'
+            . '<tr><td style="padding:6px 0;font-weight:bold;">Email</td><td>' . $email . '</td></tr>'
+            . '<tr><td style="padding:6px 0;font-weight:bold;">FV customer_id</td><td>' . $fvId . '</td></tr>'
+            . '<tr><td style="padding:6px 0;font-weight:bold;">Language</td><td>' . $lang . '</td></tr>'
+            . '<tr><td style="padding:6px 0;font-weight:bold;">Page</td><td>' . $page . '</td></tr>'
+            . '</table>'
+            . '<h3>Message</h3><p>' . $msg . '</p>';
+
+        $reply = trim((string) ($data['customerEmail'] ?? ''));
+
+        return self::send([require_env('ADMIN_EMAIL')], $subject, $html, $reply !== '' ? $reply : null);
+    }
 }

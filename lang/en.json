@@ -229,7 +229,20 @@
     "updated_badge": "Updated",
     "badge_total": "Total",
     "badge_assigned": "Assigned",
-    "mobile_order_hint": "Order from app"
+    "mobile_order_hint": "Order from app",
+    "actions": "Actions",
+    "btn_view": "View",
+    "btn_pay": "Pay",
+    "modal_products_title": "Products in this order",
+    "modal_order_total": "Order total",
+    "loading_lines": "Loading…",
+    "lines_load_error": "Could not load order lines.",
+    "pay_open_link": "Pay online",
+    "pay_modal_title": "Payment",
+    "pay_modal_intro": "Order {number} — total {total}.",
+    "pay_wa_hint": "Contact us by WhatsApp to coordinate payment for this order.",
+    "pay_wa_button": "Open WhatsApp",
+    "pay_wa_text": "Hello, I want to pay order {number} ({total})."
   },
   "order_detail": {
     "title": "Order detail",
@@ -309,6 +322,88 @@
     "success": "Message sent! We'll get back to you soon.",
     "phone_label": "Phone",
     "email_label": "Email"
+  },
+  "support_assistant": {
+    "fab_aria": "Help and support",
+    "panel_title": "Support assistant",
+    "close_aria": "Close",
+    "greeting": "Hi, how can we help you today?",
+    "greeting_named": "Hi {name}, how can we help you today?",
+    "intro": "I can walk you through the portal (catalog, orders, stock, invoices, messages) using your session data. You can also **Speak with support** so our team replies by email.",
+    "chip_orders": "Orders & invoices",
+    "chip_catalog": "Catalog & prices",
+    "chip_human": "Speak with support",
+    "reply_orders": "You can review orders under **Account → Orders**. For payments or changes, use **Speak with support** and we will email the team.",
+    "reply_catalog": "Browse the catalog while logged in to see your prices. Use filters on the left to narrow products. Need a special quote? Tap **Speak with support**.",
+    "reply_human_prompt": "Briefly describe your issue. When you send it, we notify our team at the email on file.",
+    "placeholder_issue": "Describe your question or issue…",
+    "placeholder_ask": "Ask anything: orders, categories, stock, balance…",
+    "btn_ask": "Ask",
+    "btn_send_team": "Send to support team",
+    "btn_send": "Send",
+    "toast_sent": "Your message was sent. We will contact you soon.",
+    "toast_error": "Could not send. Please try again later.",
+    "empty_message": "Please write a message before sending.",
+    "empty_ask": "Please type a question before sending.",
+    "toast_context_error": "Could not load your account context. Please try again.",
+    "bot_name": "Assistant",
+    "doc_sections": [
+      {
+        "title": "What this portal is",
+        "body": "This is the **wholesale** area after you sign in: you see **prices and terms** tied to your account. Under **Account** you open **Catalog**, **Cart**, **Orders**, **Invoices**, and **Messages** with your company. The public site without a session does not show wholesale prices."
+      },
+      {
+        "title": "Catalog and prices",
+        "body": "Under **Account → Catalog** you see active products with **your price**. The left column lists **categories**; selecting one filters items. You can search by name or SKU depending on the UI. Prices follow your **group**, **discount**, or rules the company applies (synced from FullVendor)."
+      },
+      {
+        "title": "Stock and inventory",
+        "body": "If the company enabled **inventory visibility**, you will see quantities or stock labels in the catalog. If disabled, you may not see exact counts even when the item can be ordered. Zero or “out of stock” follows current data; confirm with an order or support if it is critical."
+      },
+      {
+        "title": "Cart and placing an order",
+        "body": "You add lines to the **cart** (main flow under **Account → Cart** depending on site setup). Review quantities and notes. On submit, the order is recorded per the portal flow (FullVendor / database). Questions about lead times or shipping: **Speak with support**."
+      },
+      {
+        "title": "Orders and detail",
+        "body": "**Account → Orders** lists your orders. You can open **order detail** for lines, totals, and status. Status text comes from the company system. Changes after submit (cancel, change quantities) usually need **human support**."
+      },
+      {
+        "title": "Invoices",
+        "body": "**Account → Invoices** holds billing documents or PDFs depending on integration. If an expected invoice is missing, it may not be uploaded yet or may not apply to your account; use **Speak with support**."
+      },
+      {
+        "title": "Messages",
+        "body": "**Account → Messages** is internal chat with your team or sellers: attachments, notes, and threads. It does not replace formal legal notices but speeds up day-to-day questions."
+      },
+      {
+        "title": "Balance, debt, and terms",
+        "body": "If your customer row is synced in the portal database, a **balance** and payment **term / group** may appear. That value is **indicative** and depends on the last sync; official statements and credit limits are confirmed by **admin / support**."
+      },
+      {
+        "title": "Limits of this automatic assistant",
+        "body": "This assistant is **not** an external AI model: it combines **help text** with **your session data** (orders from DB, categories, stock counts when we load products). It does not change orders or payments. For sensitive cases use **Speak with support** with details."
+      }
+    ],
+    "dyn": {
+      "orders_intro_n": "The portal database shows **{n}** order(s) linked to your account.",
+      "orders_lines_header": "Most recent:",
+      "order_line": "• **{num}** — {date} — *{status}*. Total: **{total}**.",
+      "orders_more": "Full list under **Account → Orders**: {url}",
+      "orders_none": "No orders appear in the database linked to this portal. If you expected some, use **Speak with support**.",
+      "orders_no_db": "Orders are not available from the database in this environment; still open **Orders**: {url}",
+      "balance_line": "Latest **balance** synced in the portal: **{amount}**. Term: **{term}**. Group: **{group}**.",
+      "balance_discount": "Header discount on file (if any): **{disc}%**.",
+      "balance_unknown": "No balance or terms in the synced local profile. For statements or limits, use **Speak with support**.",
+      "stock_on": "Your company has **inventory visibility** in the catalog (quantities or labels when data exists).",
+      "stock_off": "The company may **hide inventory**; you will not see exact quantities on every item.",
+      "category_pick": "Categories (sample): **{sample}**. Filter in the catalog: {url}",
+      "category_counts": "In category **{name}**: **{total}** catalog items; **{inStock}** with stock > 0 and **{outStock}** at zero or no stock (from loaded data).",
+      "category_not_found": "I could not match a category by that name. Open the catalog and pick from the left list: {url}",
+      "products_error": "I could not load the product catalog right now. Open **Catalog**: {url}",
+      "rag_title": "Portal guide:",
+      "closing": "Need someone on the team to take action? **Speak with support**."
+    }
   },
   "messaging": {
     "title": "Messages",

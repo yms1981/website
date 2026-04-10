@@ -102,6 +102,13 @@ if (is_array($hvSess) && !empty($hvSess['approved']) && (int) ($hvSess['rolId'] 
     }
 }
 
+/** Cliente mayorista (rol 3): `companies.show_inventory` controla si se muestran cantidades en el catálogo. */
+$hvCatalogShowInventoryQty = true;
+if (is_array($hvSess) && !empty($hvSess['approved']) && (int) ($hvSess['rolId'] ?? 0) === 3 && function_exists('fullvendor_db_configured') && fullvendor_db_configured()) {
+    require_once dirname(__DIR__) . '/lib/FullVendorDb.php';
+    $hvCatalogShowInventoryQty = FullVendorDb::companyShowsProductInventory();
+}
+
 ob_start();
 $PAGE_SIZE = 40;
 ?>
@@ -164,31 +171,44 @@ $PAGE_SIZE = 40;
         <?php } ?>
       </select>
       <style>
-        .ts-wrapper.hv-seller-customer-ts { width: 100%; max-width: 36rem; }
-        .ts-wrapper.hv-seller-customer-ts .ts-control {
-          border-radius: 0.5rem;
+        #hv-seller-workspace .select2-container {
+          width: 100% !important;
+          max-width: 36rem;
+        }
+        #hv-seller-workspace .select2-container--default .select2-selection--single {
           border: 1px solid rgb(229 231 235);
-          padding: 0.45rem 0.75rem;
-          min-height: 2.5rem;
+          border-radius: 0.5rem;
+          min-height: 2.75rem;
+          box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+        }
+        #hv-seller-workspace .select2-container--default .select2-selection--single .select2-selection__rendered {
+          line-height: 2.5rem;
+          padding-left: 0.75rem;
+          padding-right: 2rem;
           font-size: 0.875rem;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.025em;
           color: rgb(17 24 39);
-          box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
         }
-        .ts-wrapper.hv-seller-customer-ts.focus .ts-control {
+        #hv-seller-workspace .select2-container--default .select2-selection--single .select2-selection__arrow {
+          height: 2.65rem;
+        }
+        #hv-seller-workspace .select2-container--default.select2-container--focus .select2-selection--single {
           border-color: rgb(248 113 113);
           box-shadow: 0 0 0 2px rgb(254 226 226);
         }
-        .ts-wrapper.hv-seller-customer-ts .ts-dropdown .option {
-          text-transform: uppercase;
+        #hv-seller-workspace .select2-dropdown {
+          border-radius: 0.5rem;
+          border-color: rgb(229 231 235);
+        }
+        #hv-seller-workspace .select2-results__option {
           font-size: 0.8125rem;
           font-weight: 600;
+          text-transform: uppercase;
           letter-spacing: 0.02em;
         }
-        .ts-wrapper.hv-seller-customer-ts .ts-dropdown {
-          border-radius: 0.5rem;
+        #hv-seller-workspace .select2-container--default .select2-results > .select2-results__options {
           max-height: min(50vh, 22rem);
         }
       </style>
@@ -333,7 +353,8 @@ $PAGE_SIZE = 40;
 </div>
 
 <?php if ($hvSellerCatalog) { ?>
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.min.js" crossorigin="anonymous"></script>
+<script src="<?= e(base_url()) ?>/assets/vendor/jquery/jquery-3.7.1.min.js?v=1"></script>
+<script src="<?= e(base_url()) ?>/assets/vendor/select2/select2.min.js?v=1"></script>
 <?php } ?>
 <script>
 (function(){
@@ -352,6 +373,7 @@ $PAGE_SIZE = 40;
   var sellerCustomers = <?= $hvSellerCustomersJson ?? '[]' ?>;
   var sellerCatalogDbSync = <?= ($hvSellerCatalog && class_exists('Db', false) && Db::enabled()) ? 'true' : 'false' ?>;
   var customerPriceAdjustment = <?= $hvCustomerPriceAdjustmentJson ?>;
+  var catalogShowInventoryQty = <?= json_encode((bool) $hvCatalogShowInventoryQty) ?>;
 
   if (document.body && document.body.getAttribute('data-hv-auth-approved') === '1') {
     var b = document.getElementById('hv-logged-banner');
@@ -374,17 +396,76 @@ $PAGE_SIZE = 40;
     var m = parseInt(p.minimum_stock, 10);
     return isNaN(m) || m < 1 ? 1 : m;
   }
+  /** Alinea una cantidad escrita con saltos de MOQ (misma lógica que +/-). */
+  function normalizeMoqTypedQty(raw, moq) {
+    moq = Math.max(1, moq || 1);
+    var s = String(raw == null ? '' : raw).trim();
+    if (s === '') return 0;
+    var n = parseInt(s, 10);
+    if (isNaN(n) || n < 1) return 0;
+    if (n < moq) return moq;
+    var k = Math.round(n / moq);
+    return Math.max(moq, k * moq);
+  }
+  function hvWriteQtyEl(el, n) {
+    if (!el) return;
+    var s = String(n);
+    if (el.tagName === 'INPUT') el.value = s;
+    else el.textContent = s;
+  }
+  function getHomeCartQty(pid) {
+    if (!window.HV || !HV.cart) return 0;
+    var it = HV.cart.load().find(function (x) { return x.productId == pid; });
+    return it ? (parseInt(it.qty, 10) || 0) : 0;
+  }
+  function applyHomeCatalogLineQty(pid, pr, desired) {
+    if (!window.HV || !HV.cart || !pr) return;
+    var moq = moqOf(pr);
+    var img = imgUrl(pr);
+    var unitP = null;
+    if (catalogShowsPrices() && pr.sale_price != null && pr.sale_price !== '') {
+      var b0 = parseFloat(pr.sale_price);
+      if (!isNaN(b0)) unitP = catalogDisplayUnitPrice(b0);
+    }
+    if (desired < 1) {
+      HV.cart.remove(pid);
+      return;
+    }
+    var curIt = HV.cart.load().find(function (x) { return x.productId == pid; });
+    if (curIt) HV.cart.setQty(pid, desired);
+    else HV.cart.add(pid, pr.name, pr.sku, img, desired, moq, unitP);
+  }
+  function commitHomeCatalogQtyInput(inp) {
+    if (!inp || !window.HV || !HV.cart) return;
+    var pid = parseInt(inp.getAttribute('data-pid'), 10);
+    if (!pid) return;
+    var pr = products.find(function (x) { return x.product_id == pid; });
+    if (!pr) return;
+    var moq = moqOf(pr);
+    var desired = normalizeMoqTypedQty(inp.value, moq);
+    applyHomeCatalogLineQty(pid, pr, desired);
+    var actual = getHomeCartQty(pid);
+    document.querySelectorAll('.hv-qty-val[data-pid="' + pid + '"]').forEach(function (el) {
+      hvWriteQtyEl(el, actual);
+    });
+    window.dispatchEvent(new CustomEvent('hv-cart-change'));
+  }
   function isLoggedIn() {
     return !!(document.body && document.body.getAttribute('data-hv-auth-approved') === '1');
   }
 
   /**
    * En /es la home usa showPrice=false aunque /api/products devuelve sale_price con sesión.
-   * Vendedor: solo mostrar precios con cliente seleccionado (ajuste de grupo + carrito).
+   * Vendedor: mostrar precios de lista (sale_price) sin cliente; con cliente, ajuste de grupo en catalogDisplayUnitPrice.
    */
   function catalogShowsPrices() {
     if (!isLoggedIn()) return false;
-    if (sellerCatalogMode) return sellerCustomerReady();
+    if (sellerCatalogMode) {
+      return products.some(function (p) {
+        var sp = p.sale_price;
+        return sp != null && sp !== '';
+      });
+    }
     if (showPrice) return true;
     return products.some(function (p) {
       var sp = p.sale_price;
@@ -510,11 +591,6 @@ $PAGE_SIZE = 40;
       });
     }
     return list;
-  }
-
-  function sellerCustomerReady() {
-    if (!sellerCatalogMode) return true;
-    return !!(window.HV && HV.cart && typeof HV.cart.getSellerCustomerFvId === 'function' && HV.cart.getSellerCustomerFvId());
   }
 
   function getSelectedSellerPriceAdjustment() {
@@ -685,11 +761,11 @@ $PAGE_SIZE = 40;
       if (det0) det0.classList.add('hidden');
       return;
     }
-    if (layout) layout.classList.toggle('hidden', !ready);
+    if (layout) layout.classList.remove('hidden');
     if (hint) hint.classList.toggle('hidden', ready);
     renderSellerCustomerDetails();
     syncPriceFilterUi();
-    if (ready) render();
+    render();
   }
 
   function syncSellerSelectFromStorage() {
@@ -702,8 +778,8 @@ $PAGE_SIZE = 40;
     }
     var next = id || '';
     sel.value = next;
-    if (sel.tomselect) {
-      sel.tomselect.setValue(next, true);
+    if (typeof jQuery !== 'undefined' && jQuery(sel).data('select2')) {
+      jQuery(sel).val(next || null).trigger('change');
     }
   }
 
@@ -775,25 +851,32 @@ $PAGE_SIZE = 40;
     var selCust = document.getElementById('hv-seller-customer-select');
     if (selCust) {
       syncSellerSelectFromStorage();
-      if (typeof TomSelect !== 'undefined' && !selCust.tomselect) {
-        var tsPh = (dict.home && dict.home.seller_customer_search_placeholder) ? String(dict.home.seller_customer_search_placeholder) : '';
-        new TomSelect(selCust, {
-          allowEmptyOption: true,
-          create: false,
-          maxOptions: null,
-          wrapperClass: 'hv-seller-customer-ts',
-          dropdownParent: document.body,
-          placeholder: tsPh
+      if (typeof jQuery !== 'undefined' && jQuery.fn.select2 && !jQuery(selCust).data('select2')) {
+        var ph = (dict.home && dict.home.seller_customer_placeholder) ? String(dict.home.seller_customer_placeholder) : '';
+        jQuery(selCust).select2({
+          theme: 'default',
+          width: '100%',
+          placeholder: ph,
+          allowClear: true,
+          dropdownParent: jQuery(document.body),
+          minimumResultsForSearch: 0
+        });
+        jQuery(selCust).on('change', function () {
+          if (!window.HV || !HV.cart) return;
+          HV.cart.setSellerCustomerFvId(jQuery(this).val() || '');
+          updateSellerGate();
+        });
+      } else if (typeof jQuery === 'undefined' || !jQuery.fn.select2) {
+        selCust.addEventListener('change', function () {
+          if (!window.HV || !HV.cart) return;
+          HV.cart.setSellerCustomerFvId(selCust.value || '');
+          updateSellerGate();
         });
       }
-      selCust.addEventListener('change', function () {
-        HV.cart.setSellerCustomerFvId(selCust.value);
-        updateSellerGate();
-      });
     }
     window.addEventListener('hv-seller-customer-change', updateSellerGate);
     window.addEventListener('hv-cart-change', function () {
-      if (sellerCatalogMode && sellerCustomerReady()) render();
+      if (sellerCatalogMode) render();
       if (sellerCatalogMode && sellerCatalogDbSync && !sellerCatalogSyncingFromServer) {
         scheduleSellerCatalogStatePost();
       }
@@ -812,7 +895,6 @@ $PAGE_SIZE = 40;
 
   function render() {
     if (!catalogReady) return;
-    if (!sellerCustomerReady()) return;
     var list = filtered();
     var root = document.getElementById('hv-catalog-root');
     var empty = document.getElementById('hv-empty');
@@ -844,12 +926,17 @@ $PAGE_SIZE = 40;
       var oos = !isNaN(stockN) && stockN <= 0;
       var badge = '';
       if (hasStock) {
-        var rawSt = parseFloat(String(p.stock != null ? p.stock : '').replace(',', '.'));
-        var stockShow = (!isNaN(rawSt) && rawSt > 0)
-          ? (Math.abs(rawSt - Math.round(rawSt)) < 1e-9 ? String(Math.round(rawSt)) : String(rawSt))
-          : String(stockN);
         var stockLbl = (dict.home && dict.home.in_stock_badge) ? dict.home.in_stock_badge : (lang === 'es' ? 'En Existencia:' : 'In Stock:');
-        badge = '<span class="hv-catalog-stock-badge hv-catalog-stock-badge--in">' + stockLbl + ' ' + stockShow + '</span>';
+        if (catalogShowInventoryQty) {
+          var rawSt = parseFloat(String(p.stock != null ? p.stock : '').replace(',', '.'));
+          var stockShow = (!isNaN(rawSt) && rawSt > 0)
+            ? (Math.abs(rawSt - Math.round(rawSt)) < 1e-9 ? String(Math.round(rawSt)) : String(rawSt))
+            : String(stockN);
+          badge = '<span class="hv-catalog-stock-badge hv-catalog-stock-badge--in">' + stockLbl + ' ' + stockShow + '</span>';
+        } else {
+          var inOnly = (dict.product && dict.product.in_stock) ? dict.product.in_stock : (lang === 'es' ? 'En existencia' : 'In stock');
+          badge = '<span class="hv-catalog-stock-badge hv-catalog-stock-badge--in">' + inOnly + '</span>';
+        }
       } else if (oos) {
         badge = '<span class="hv-catalog-stock-badge hv-catalog-stock-badge--out">' + (dict.home.out_of_stock_badge||'') + '</span>';
       }
@@ -860,7 +947,7 @@ $PAGE_SIZE = 40;
           '<div class="mt-auto pt-3">' +
           '<div class="flex items-center justify-between gap-2">' +
           '<button type="button" class="hv-qty-min w-8 h-8 border rounded-lg text-gray-600" data-pid="'+p.product_id+'">−</button>' +
-          '<span class="text-sm font-bold w-8 text-center hv-qty-val" data-pid="'+p.product_id+'">'+q+'</span>' +
+          '<input type="number" min="0" step="1" inputmode="numeric" autocomplete="off" aria-label="' + escAttr((dict.cart && dict.cart.quantity_label) ? dict.cart.quantity_label : (lang === 'es' ? 'Cantidad' : 'Quantity')) + '" class="hv-qty-val hv-qty-input min-w-[2.5rem] w-14 max-w-[4.5rem] shrink-0 rounded-lg border border-transparent bg-white py-1 px-1 text-center text-sm font-bold tabular-nums text-gray-900 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-100" data-pid="'+p.product_id+'" value="'+q+'" />' +
           '<button type="button" class="hv-qty-plus w-8 h-8 border rounded-lg text-gray-600" data-pid="'+p.product_id+'">+</button>' +
           '</div>' +
           '<p class="text-xs text-gray-500 mt-1.5 hv-catalog-card-moq"><span class="text-gray-500">'+moqLabel+'</span> <span class="font-medium text-gray-700">'+moq+'</span></p>' +
@@ -889,9 +976,19 @@ $PAGE_SIZE = 40;
             if (!isNaN(b0)) unitP = catalogDisplayUnitPrice(b0);
           }
           var nq = HV.cart.stepQty(pid, pr.name, pr.sku, img, moq, delta, unitP);
-          document.querySelectorAll('.hv-qty-val[data-pid="'+pid+'"]').forEach(function(el){ el.textContent = nq; });
+          document.querySelectorAll('.hv-qty-val[data-pid="'+pid+'"]').forEach(function (el) { hvWriteQtyEl(el, nq); });
           if (delta > 0 && nq === moq) HV.toast && HV.toast(dict.toast.added_to_cart);
           window.dispatchEvent(new CustomEvent('hv-cart-change'));
+        });
+      });
+      card.querySelectorAll('.hv-qty-input').forEach(function (inp) {
+        inp.addEventListener('change', function () { commitHomeCatalogQtyInput(inp); });
+        inp.addEventListener('blur', function () { commitHomeCatalogQtyInput(inp); });
+        inp.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            inp.blur();
+          }
         });
       });
     });
@@ -1374,6 +1471,6 @@ $PAGE_SIZE = 40;
 $content = ob_get_clean();
 $pageTitle = $dict['seo']['title'];
 $layoutHeadExtra = !empty($hvSellerCatalog)
-  ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" crossorigin="anonymous">'
+  ? '<link rel="stylesheet" href="' . e(base_url()) . '/assets/vendor/select2/select2.min.css?v=1">'
   : '';
 require __DIR__ . '/layout.php';

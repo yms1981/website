@@ -494,6 +494,22 @@ final class FullVendorDb
     }
 
     /**
+     * Portal cliente (rol 3): si `companies.show_inventory` = 1 para FULLVENDOR_COMPANY_ID, mostrar cantidades de stock en UI.
+     * Sin BD FullVendor configurada no aplica (se asume mostrar como hasta ahora).
+     */
+    public static function companyShowsProductInventory(): bool
+    {
+        if (!function_exists('fullvendor_db_configured') || !fullvendor_db_configured()) {
+            return true;
+        }
+        try {
+            return self::companyShowInventory(self::pdo());
+        } catch (Throwable) {
+            return true;
+        }
+    }
+
+    /**
      * Galería como wcproductList_post (product_id en product_images = products.product_id).
      *
      * @return list<array<string, mixed>>

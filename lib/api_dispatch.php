@@ -821,6 +821,71 @@ function hv_api_dispatch(): void
             json_response(['success' => true]);
         }
 
+        /** Cliente rol 3: contexto para el asistente (rutas, pedidos, categorías, saldo local, inventario). */
+        if ($parts === ['support', 'context'] && $method === 'GET') {
+            $session = Auth::getSession();
+            if ($session === null || empty($session['approved']) || (int) ($session['rolId'] ?? 0) !== 3) {
+                json_response(['error' => 'Forbidden'], 403);
+            }
+            $lang = (string) ($_GET['lang'] ?? 'en');
+            if ($lang !== 'es' && $lang !== 'en') {
+                $lang = 'en';
+            }
+            require_once dirname(__DIR__) . '/lib/SupportAssistantContext.php';
+            try {
+                $ctx = SupportAssistantContext::build($session, $lang);
+            } catch (Throwable $e) {
+                if (function_exists('app_debug') && app_debug()) {
+                    json_response(['error' => $e->getMessage()], 500);
+                }
+                json_response(['error' => 'Context unavailable'], 500);
+            }
+            json_response(['ok' => true, 'context' => $ctx]);
+        }
+
+        if ($parts === ['support', 'escalate'] && $method === 'POST') {
+            $session = Auth::getSession();
+            if ($session === null || empty($session['approved']) || (int) ($session['rolId'] ?? 0) !== 3) {
+                json_response(['error' => 'Forbidden'], 403);
+            }
+            $b = read_json_body();
+            $message = trim((string) ($b['message'] ?? ''));
+            $pageUrl = trim((string) ($b['pageUrl'] ?? ''));
+            $lang = trim((string) ($b['lang'] ?? 'en'));
+            if ($lang !== 'es' && $lang !== 'en') {
+                $lang = 'en';
+            }
+            if (strlen($message) > 4000) {
+                json_response(['error' => 'Message too long'], 400);
+            }
+            if ($message === '') {
+                json_response(['error' => 'Message required'], 400);
+            }
+            $admin = trim((string) config('ADMIN_EMAIL', ''));
+            if ($admin === '') {
+                json_response(['error' => 'ADMIN_EMAIL not configured'], 503);
+            }
+            try {
+                $ok = EmailService::sendWholesaleSupportEscalation([
+                    'customerName' => (string) ($session['name'] ?? ''),
+                    'customerEmail' => (string) ($session['email'] ?? ''),
+                    'customerFvId' => (int) ($session['customerId'] ?? 0),
+                    'lang' => $lang,
+                    'pageUrl' => $pageUrl !== '' ? $pageUrl : ($_SERVER['HTTP_REFERER'] ?? ''),
+                    'message' => $message,
+                ]);
+            } catch (Throwable $e) {
+                if (function_exists('app_debug') && app_debug()) {
+                    json_response(['error' => $e->getMessage()], 500);
+                }
+                json_response(['error' => 'Failed to send'], 500);
+            }
+            if (!$ok) {
+                json_response(['error' => 'Failed to send email'], 502);
+            }
+            json_response(['success' => true]);
+        }
+
         if ($parts === ['admin', 'registrations'] && $method === 'GET') {
             require_admin_session();
             if (!Db::enabled()) {

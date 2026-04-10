@@ -41,6 +41,74 @@ final class HvOrderUi
         12 => 'Rechazado',
     ];
 
+    /**
+     * Estados tipo "Warehouse Completed" que no deben tratarse como el completado final del listado.
+     */
+    private static function statusTextIsWarehouseCompleted(string $s): bool
+    {
+        $s = mb_strtolower(trim($s));
+        if ($s === '') {
+            return false;
+        }
+        if (preg_match('/warehouse\s*[-\s]*completed\b/u', $s) === 1) {
+            return true;
+        }
+        if (preg_match('/\bcompleted\s+in\s+warehouse\b/u', $s) === 1) {
+            return true;
+        }
+        if (preg_match('/almac[eé]n\s+completad[oa]s?\b/u', $s) === 1) {
+            return true;
+        }
+        if (preg_match('/bodega\s+completad[oa]s?\b/u', $s) === 1) {
+            return true;
+        }
+        if (preg_match('/completad[oa]s?\s+en\s+(el\s+)?(almac[eé]n|bodega)\b/u', $s) === 1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Fila de listado: pedido en estado completado (código legacy 6 o etiqueta EN/ES desde BD).
+     * Excluye "Warehouse Completed" y equivalentes (no es el mismo cierre que "Completed" solo).
+     *
+     * @param array<string, mixed> $o
+     */
+    public static function orderRowIsCompleted(array $o): bool
+    {
+        $checks = [
+            mb_strtolower(trim((string) ($o['status_label'] ?? ''))),
+            mb_strtolower(trim((string) ($o['name_status_english'] ?? ''))),
+            mb_strtolower(trim((string) ($o['name_status_spanish'] ?? ''))),
+        ];
+        foreach ($checks as $s) {
+            if ($s !== '' && self::statusTextIsWarehouseCompleted($s)) {
+                return false;
+            }
+        }
+
+        $code = null;
+        if (isset($o['order_status']) && is_numeric($o['order_status'])) {
+            $code = (int) $o['order_status'];
+        } elseif (isset($o['status']) && is_numeric($o['status'])) {
+            $code = (int) $o['status'];
+        }
+        if ($code === 6) {
+            return true;
+        }
+        foreach ($checks as $s) {
+            if ($s === '') {
+                continue;
+            }
+            if (preg_match('/\bcompleted\b/u', $s) === 1 || preg_match('/\bcompletad[oa]s?\b/u', $s) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function enrichOrderRow(array $o, string $lang): array
     {
         $langNorm = strtolower(explode('-', trim($lang), 2)[0] ?? 'en');

@@ -21,7 +21,7 @@ if (class_exists('Auth', false)) {
         }
         if ($hvAuthApproved) {
             $hvRDrawer = (int) ($hvSessBody['rolId'] ?? 0);
-            $hvShowMsgDrawer = ($hvRDrawer === 2 || $hvRDrawer === 3);
+            $hvShowMsgDrawer = ($hvRDrawer === 2 || $hvRDrawer === 3) && hv_show_messages_ui();
         }
     }
 }
@@ -36,7 +36,7 @@ if (class_exists('Auth', false)) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= e(base_url()) ?>/assets/css/app.css?v=14">
+  <link rel="stylesheet" href="<?= e(base_url()) ?>/assets/css/app.css?v=15">
   <?php if ($layoutHeadExtra !== '') { ?>
   <?= $layoutHeadExtra ?>
   <?php } ?>
@@ -107,6 +107,9 @@ if (class_exists('Auth', false)) {
   <?php require __DIR__ . '/partials/nav-drawer.php'; ?>
   <?php if (!empty($hvShowMsgDrawer)) {
       require __DIR__ . '/partials/messages-drawer.php';
+  } ?>
+  <?php if ($hvAuthApproved && $hvBodyRol === 3) {
+      require __DIR__ . '/partials/support-fab.php';
   } ?>
 </body>
 </html>

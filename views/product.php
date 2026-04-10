@@ -4,6 +4,11 @@
 $relatedProducts = $relatedProducts ?? [];
 $hv_session = Auth::getSession();
 $hv_logged_in = is_array($hv_session) && !empty($hv_session['approved']);
+$hv_show_inventory_qty = true;
+if ($hv_logged_in && (int) ($hv_session['rolId'] ?? 0) === 3 && function_exists('fullvendor_db_configured') && fullvendor_db_configured()) {
+    require_once dirname(__DIR__) . '/lib/FullVendorDb.php';
+    $hv_show_inventory_qty = FullVendorDb::companyShowsProductInventory();
+}
 $hv_customer_price_adj = null;
 if ($hv_logged_in && (int) ($hv_session['rolId'] ?? 0) === 3 && class_exists('Db', false) && Db::enabled()) {
     $hv_cfv = (int) ($hv_session['customerId'] ?? 0);
@@ -81,7 +86,9 @@ ob_start();
           <span class="hv-pdp-sku"><span class="hv-pdp-sku__label"><?= e($dict['product']['sku']) ?></span> <?= e((string) ($product['sku'] ?? '—')) ?></span>
           <span class="hv-pdp-stock-badge<?= $stock > 0 ? ' hv-pdp-stock-badge--in' : ' hv-pdp-stock-badge--out' ?>">
             <?= $stock > 0 ? e($dict['product']['in_stock']) : e($dict['product']['out_of_stock']) ?>
-            <span class="hv-pdp-stock-badge__qty"><?= $stock ?></span>
+            <?php if ($hv_show_inventory_qty) { ?>
+            <span class="hv-pdp-stock-badge__qty"><?= (int) $stock ?></span>
+            <?php } ?>
           </span>
         </div>
 
@@ -102,7 +109,7 @@ ob_start();
           <span class="hv-pdp-qty__label"><?= e($dict['cart']['quantity_label'] ?? 'Quantity') ?></span>
           <div class="hv-pdp-qty__controls">
             <button type="button" id="hv-p-min" class="hv-pdp-qty__btn" aria-label="−">−</button>
-            <span id="hv-p-qty" class="hv-pdp-qty__val">0</span>
+            <input type="number" id="hv-p-qty" class="hv-pdp-qty__val hv-qty-input" min="0" step="1" inputmode="numeric" autocomplete="off" value="0" aria-label="<?= e($dict['cart']['quantity_label'] ?? 'Quantity') ?>" />
             <button type="button" id="hv-p-plus" class="hv-pdp-qty__btn" aria-label="+">+</button>
           </div>
           <p class="hv-pdp-qty__moq"><?= e($dict['product']['moq_label'] ?? 'MOQ:') ?> <?= (int) $moq ?></p>
@@ -193,7 +200,7 @@ ob_start();
           <div class="group bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-card-hv hover:shadow-card-hv hover:border-gray-200 card-lift flex flex-col h-full hv-related-card__inner">
             <a href="<?= e($bp) ?>/<?= e($lang) ?>/products/<?= $rpid ?>" class="block relative aspect-square bg-[#FAFAF8] overflow-hidden">
               <?php if ($rHasStock) { ?>
-              <span class="hv-catalog-stock-badge hv-catalog-stock-badge--in"><?= e($hvStockLbl) ?> <?= e($rStockShow) ?></span>
+              <span class="hv-catalog-stock-badge hv-catalog-stock-badge--in"><?= $hv_show_inventory_qty ? e($hvStockLbl) . ' ' . e($rStockShow) : e($dict['product']['in_stock'] ?? '') ?></span>
               <?php } elseif ($rOos && $hvOosBadge !== '') { ?>
               <span class="hv-catalog-stock-badge hv-catalog-stock-badge--out"><?= e($hvOosBadge) ?></span>
               <?php } ?>
@@ -211,7 +218,7 @@ ob_start();
               <div class="mt-auto pt-3">
                 <div class="flex items-center justify-between gap-2">
                   <button type="button" class="hv-qty-min w-8 h-8 border rounded-lg text-gray-600 flex items-center justify-center touch-manipulation" data-pid="<?= $rpid ?>" aria-label="−">−</button>
-                  <span class="text-sm font-bold w-8 text-center hv-qty-val hv-related-qty-val" data-pid="<?= $rpid ?>">0</span>
+                  <input type="number" min="0" step="1" inputmode="numeric" autocomplete="off" class="text-sm font-bold min-w-[2.5rem] w-14 max-w-[4.5rem] shrink-0 text-center rounded-lg border border-transparent bg-white py-1 px-1 tabular-nums text-gray-900 focus:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-100 hv-qty-val hv-related-qty-val hv-qty-input" data-pid="<?= $rpid ?>" value="0" aria-label="<?= e($dict['cart']['quantity_label'] ?? 'Quantity') ?>" />
                   <button type="button" class="hv-qty-plus w-8 h-8 border rounded-lg text-gray-600 flex items-center justify-center touch-manipulation" data-pid="<?= $rpid ?>" aria-label="+">+</button>
                 </div>
                 <p class="text-xs text-gray-500 mt-1.5 hv-catalog-card-moq"><span class="text-gray-500"><?= e($hvMoqLbl) ?></span> <span class="font-medium text-gray-700"><?= (int) $rMoq ?></span></p>
@@ -255,6 +262,22 @@ ob_start();
   var qtyEnabled = <?= $hv_logged_in ? 'true' : 'false' ?>;
   var pdpUnitPrice = <?= $pdp_cart_unit_price !== null ? json_encode((float) $pdp_cart_unit_price) : 'null' ?>;
   var relatedProducts = <?= json_encode($hvRelatedJs ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>;
+  function normalizeMoqTypedQty(raw, moqVal) {
+    moqVal = Math.max(1, moqVal || 1);
+    var s = String(raw == null ? '' : raw).trim();
+    if (s === '') return 0;
+    var n = parseInt(s, 10);
+    if (isNaN(n) || n < 1) return 0;
+    if (n < moqVal) return moqVal;
+    var k = Math.round(n / moqVal);
+    return Math.max(moqVal, k * moqVal);
+  }
+  function hvWriteQtyEl(el, n) {
+    if (!el) return;
+    var s = String(n);
+    if (el.tagName === 'INPUT') el.value = s;
+    else el.textContent = s;
+  }
   function imgUrl() {
     var el = document.getElementById('hv-p-main');
     return el ? el.src : '';
@@ -267,7 +290,23 @@ ob_start();
       if (it) q = it.qty;
     }
     var el = document.getElementById('hv-p-qty');
-    if (el) el.textContent = q;
+    hvWriteQtyEl(el, q);
+  }
+  function commitPdpQtyFromInput() {
+    if (!window.HV || !HV.cart) return;
+    var inp = document.getElementById('hv-p-qty');
+    if (!inp) return;
+    var desired = normalizeMoqTypedQty(inp.value, moq);
+    var up = (pdpUnitPrice != null && !isNaN(parseFloat(pdpUnitPrice))) ? parseFloat(pdpUnitPrice) : null;
+    if (desired < 1) {
+      HV.cart.remove(p.product_id);
+    } else {
+      var cur = HV.cart.load().find(function (x) { return x.productId == p.product_id; });
+      if (cur) HV.cart.setQty(p.product_id, desired);
+      else HV.cart.add(p.product_id, p.name, p.sku, imgUrl(), desired, moq, up);
+    }
+    syncQty();
+    window.dispatchEvent(new CustomEvent('hv-cart-change'));
   }
   document.querySelectorAll('.hv-thumb').forEach(function(b) {
     b.addEventListener('click', function() {
@@ -296,6 +335,17 @@ ob_start();
     });
     syncQty();
     window.addEventListener('hv-cart-change', syncQty);
+    var pQtyInp = document.getElementById('hv-p-qty');
+    if (pQtyInp) {
+      pQtyInp.addEventListener('change', commitPdpQtyFromInput);
+      pQtyInp.addEventListener('blur', commitPdpQtyFromInput);
+      pQtyInp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          pQtyInp.blur();
+        }
+      });
+    }
   }
   function relatedByPid(pid) {
     return relatedProducts.find(function (x) { return x.product_id == pid; });
@@ -309,7 +359,7 @@ ob_start();
         if (it) q = it.qty;
       }
       document.querySelectorAll('#hv-related-track .hv-qty-val[data-pid="' + pr.product_id + '"]').forEach(function (el) {
-        el.textContent = q;
+        hvWriteQtyEl(el, q);
       });
     });
   }
@@ -329,10 +379,49 @@ ob_start();
       var up = (pr.display_unit_price != null && !isNaN(parseFloat(pr.display_unit_price))) ? parseFloat(pr.display_unit_price) : null;
       var nq = HV.cart.stepQty(pid, pr.name, pr.sku, pr.image || '', moq, delta, up);
       document.querySelectorAll('#hv-related-track .hv-qty-val[data-pid="' + pid + '"]').forEach(function (el) {
-        el.textContent = nq;
+        hvWriteQtyEl(el, nq);
       });
       if (delta > 0 && nq === moq) HV.toast && HV.toast(dict.toast.added_to_cart);
       window.dispatchEvent(new CustomEvent('hv-cart-change'));
+    });
+    function commitRelatedQtyInput(inp) {
+      if (!inp || !window.HV || !HV.cart) return;
+      var pid = parseInt(inp.getAttribute('data-pid'), 10);
+      var pr = relatedByPid(pid);
+      if (!pr) return;
+      var moqR = Math.max(1, parseInt(pr.minimum_stock, 10) || 1);
+      var desired = normalizeMoqTypedQty(inp.value, moqR);
+      var up = (pr.display_unit_price != null && !isNaN(parseFloat(pr.display_unit_price))) ? parseFloat(pr.display_unit_price) : null;
+      if (desired < 1) HV.cart.remove(pid);
+      else {
+        var cur = HV.cart.load().find(function (x) { return x.productId == pid; });
+        if (cur) HV.cart.setQty(pid, desired);
+        else HV.cart.add(pid, pr.name, pr.sku, pr.image || '', desired, moqR, up);
+      }
+      var actual = 0;
+      var itA = HV.cart.load().find(function (x) { return x.productId == pid; });
+      if (itA) actual = itA.qty;
+      document.querySelectorAll('#hv-related-track .hv-qty-val[data-pid="' + pid + '"]').forEach(function (el) {
+        hvWriteQtyEl(el, actual);
+      });
+      window.dispatchEvent(new CustomEvent('hv-cart-change'));
+    }
+    relTrack.addEventListener('change', function (e) {
+      var inp = e.target && e.target.closest && e.target.closest('.hv-related-qty-val');
+      if (!inp || !relTrack.contains(inp)) return;
+      commitRelatedQtyInput(inp);
+    });
+    relTrack.addEventListener('blur', function (e) {
+      var inp = e.target && e.target.closest && e.target.closest('.hv-related-qty-val');
+      if (!inp || !relTrack.contains(inp)) return;
+      commitRelatedQtyInput(inp);
+    }, true);
+    relTrack.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      var inp = e.target && e.target.closest && e.target.closest('.hv-related-qty-val');
+      if (!inp || !relTrack.contains(inp)) return;
+      e.preventDefault();
+      inp.blur();
     });
     function pullRelatedQtys() {
       if (window.HV && HV.cart && typeof HV.cart.refreshPortalFromServer === 'function' &&
