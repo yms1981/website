@@ -33,11 +33,19 @@ final class WebLogin
 
         $registration = null;
         if (Db::enabled()) {
-            $st = Db::pdo()->prepare('SELECT * FROM pending_registrations WHERE email = ? LIMIT 1');
-            $st->execute([$email]);
-            $registration = $st->fetch();
+            try {
+                $st = Db::pdo()->prepare('SELECT * FROM pending_registrations WHERE email = ? LIMIT 1');
+                $st->execute([$email]);
+                $registration = $st->fetch();
+            } catch (Throwable) {
+                $registration = null;
+            }
         }
-        $res = FullVendor::login((string) $email, $password);
+        try {
+            $res = FullVendor::login((string) $email, $password);
+        } catch (Throwable) {
+            return ['success' => false, 'error' => 'invalid'];
+        }
         if (($res['status'] ?? '') !== '1' || empty($res['info'])) {
             return ['success' => false, 'error' => 'invalid'];
         }

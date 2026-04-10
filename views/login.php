@@ -50,7 +50,7 @@ ob_start();
         </button>
       </div>
     </div>
-    <p id="hv-login-err" class="text-sm text-red-700<?= $hvLoginError === '' ? ' hidden' : '' ?>" role="<?= $hvLoginError === '' ? 'none' : 'alert' ?>"><?= $hvLoginError !== '' ? e($hvLoginError) : '' ?></p>
+    <p id="hv-login-err" class="hidden" aria-hidden="true"></p>
     <button type="submit" class="w-full py-3 bg-red-700 text-white rounded-xl font-semibold"><?= e($dict['auth']['login_button']) ?></button>
   </form>
   <p class="mt-6 text-center text-sm text-gray-600"><?= e($dict['auth']['no_account']) ?>
@@ -76,6 +76,19 @@ ob_start();
   });
 })();
 </script>
+<?php if ($hvLoginError !== '') { ?>
+<noscript><p class="mt-4 text-sm text-red-700" role="alert"><?= e($hvLoginError) ?></p></noscript>
+<script>
+window.addEventListener('load', function () {
+  var msg = <?= json_encode($hvLoginError, JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) ?>;
+  if (window.HV && typeof HV.alert === 'function') {
+    HV.alert(msg, { icon: 'error' });
+  } else if (typeof Swal !== 'undefined') {
+    Swal.fire({ icon: 'error', text: msg, confirmButtonColor: '#b91c1c' });
+  }
+});
+</script>
+<?php } ?>
 <?php
 $content = ob_get_clean();
 $pageTitle = $dict['auth']['login_title'] . ' — ' . ($dict['seo']['title'] ?? '');

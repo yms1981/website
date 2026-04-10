@@ -80,6 +80,13 @@ try {
         require __DIR__ . '/views/login.php';
         exit;
     }
+    if ($route === 'logout') {
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+        header('Pragma: no-cache');
+        Auth::destroySession();
+        header('Location: ' . base_url() . '/' . $lang . '?hv_clear_cart=1&_=' . time(), true, 302);
+        exit;
+    }
     if ($route === 'register') {
         require __DIR__ . '/views/register.php';
         exit;

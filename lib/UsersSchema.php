@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Crea tablas locales (`customers`, `customers_request`, `users`, `usersList`, `orders`, `order_details`,
+ * Crea tablas locales (`pending_registrations`, `customers`, `customers_request`, `users`, `usersList`, `orders`, `order_details`,
  * `cart_orders`, `cart_details`, `portal_cart_header`, `portal_cart_item`, `seller_catalog_user_state`, `customer_catalog_user_state`, `customer_groups`, catálogo) si no existen y asegura el usuario admin.
  */
 final class UsersSchema
@@ -20,6 +20,7 @@ final class UsersSchema
             $pdo = Db::pdo();
             self::ensureCustomersTable($pdo);
             self::ensureCustomersRequestTable($pdo);
+            self::ensurePendingRegistrationsTable($pdo);
             self::ensureUsersTable($pdo);
             self::ensureUsersListTable($pdo);
             self::ensureCatalogCategoriesTable($pdo);
@@ -110,6 +111,33 @@ final class UsersSchema
     private static function ensureCustomersRequestTable(\PDO $pdo): void
     {
         $pdo->exec(self::customersRequestTableSql());
+    }
+
+    private static function ensurePendingRegistrationsTable(\PDO $pdo): void
+    {
+        $pdo->exec(self::pendingRegistrationsTableSql());
+    }
+
+    private static function pendingRegistrationsTableSql(): string
+    {
+        return <<<'SQL'
+CREATE TABLE IF NOT EXISTS `pending_registrations` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `contact_name` VARCHAR(255) NOT NULL,
+  `company_name` VARCHAR(255) NOT NULL,
+  `tax_id` VARCHAR(100) DEFAULT '',
+  `address` VARCHAR(500) DEFAULT '',
+  `email` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(50) DEFAULT '',
+  `mobile` VARCHAR(50) DEFAULT '',
+  `has_whatsapp` TINYINT(1) DEFAULT 0,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `status` ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  `fullvendor_customer_id` INT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+SQL;
     }
 
     private static function ensureCatalogCategoriesTable(\PDO $pdo): void

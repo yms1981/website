@@ -106,13 +106,6 @@ document.addEventListener('DOMContentLoaded', function () {
   var lang = <?= json_encode($lang) ?>;
   /** Misma pestaña y cookies: evita fetch a otro host que el de la barra (localhost vs 127.0.0.1). */
   var basePath = (typeof window.HV_BASE_PATH === 'string' ? window.HV_BASE_PATH : '').replace(/\/$/, '');
-  var apiLogout = (basePath ? basePath : '') + '/api/auth/logout';
-  if (apiLogout.charAt(0) !== '/') {
-    apiLogout = '/' + apiLogout;
-  }
-  function hvNavHomeAfterLogout() {
-    return window.location.origin + (basePath || '') + '/' + lang + '?_=' + Date.now();
-  }
   try {
     var usp = new URLSearchParams(window.location.search || '');
     if (usp.get('hv_clear_cart') === '1') {
@@ -139,31 +132,13 @@ document.addEventListener('DOMContentLoaded', function () {
     var secure = window.location.protocol === 'https:';
     document.cookie = 'hv-logged-in=; Max-Age=0; path=/; SameSite=Lax' + (secure ? '; Secure' : '');
   }
-  function hvNavAfterLogoutGo() {
-    try {
-      if (window.HV && HV.cart && typeof HV.cart.clearClientStorageOnLogout === 'function') {
-        HV.cart.clearClientStorageOnLogout();
-      }
-    } catch (e) {}
+  /** Logout por página (sesión PHP), no por API: evita 404 si /api no enruta bien. */
+  function hvNavDoLogout() {
     try {
       sessionStorage.setItem('hv_post_logout', '1');
     } catch (e1) {}
     hvNavClearLoggedInCookie();
-    window.location.replace(hvNavHomeAfterLogout());
-  }
-  function hvNavDoLogout() {
-    fetch(apiLogout, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin', body: '{}' })
-      .then(function (r) { return r.text().then(function () { return r.ok; }); })
-      .then(function (ok) {
-        if (ok) {
-          hvNavAfterLogoutGo();
-          return;
-        }
-        window.location.replace(apiLogout + '?lang=' + encodeURIComponent(lang) + '&_=' + Date.now());
-      })
-      .catch(function () {
-        window.location.replace(apiLogout + '?lang=' + encodeURIComponent(lang) + '&_=' + Date.now());
-      });
+    window.location.replace(window.location.origin + (basePath || '') + '/' + lang + '/logout?_=' + Date.now());
   }
   /** Sesión aprobada en servidor (layout). `logged` puede ampliarse con cookie; el badge de mensajes solo con sesión real. */
   var authApproved = document.body && document.body.getAttribute('data-hv-auth-approved') === '1';

@@ -419,7 +419,9 @@ function hv_api_dispatch(): void
             json_response(['profile' => hv_api_profile_payload($session['email'], $langP)]);
         }
 
-        if ($parts === ['auth', 'logout'] && ($method === 'POST' || $method === 'GET')) {
+        $hvLogoutParts = $parts === ['auth', 'logout']
+            || $parts === ['api', 'auth', 'logout']; // si __path llega como api/auth/logout
+        if ($hvLogoutParts && ($method === 'POST' || $method === 'GET')) {
             header('Cache-Control: no-store, no-cache, must-revalidate');
             header('Pragma: no-cache');
             Auth::destroySession();

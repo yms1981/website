@@ -173,7 +173,12 @@ final class FullVendor
         if ($raw === false) {
             throw new RuntimeException('FullVendor request failed: ' . $err);
         }
+        $loginEndpoint = strcasecmp($endpoint, 'login') === 0;
         if ($code < 200 || $code >= 300) {
+            $jsonErr = json_decode($raw, true);
+            if ($loginEndpoint && is_array($jsonErr)) {
+                return $jsonErr;
+            }
             if (strcasecmp($endpoint, 'addOrder') === 0) {
                 $reqJson = json_encode($body, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
                 if ($reqJson === false) {
@@ -192,6 +197,11 @@ final class FullVendor
             $failed = $st === false || $st === 0 || $st === '0' || $st === 'false';
             if ($failed) {
                 $err = (string) ($json['error'] ?? $json['message'] ?? $json['msg'] ?? 'Request failed');
+                if ($loginEndpoint) {
+                    self::writeApiSnapshot($endpoint, $body, $json);
+
+                    return $json;
+                }
                 if (strcasecmp($endpoint, 'addOrder') === 0) {
                     $reqJson = json_encode($body, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
                     if ($reqJson === false) {

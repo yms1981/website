@@ -1,4 +1,5 @@
 <?php
+$layoutHeadExtra = $layoutHeadExtra ?? '';
 $pageTitle = $pageTitle ?? ($dict['seo']['title'] ?? 'Home Value');
 $hvBodyRol = 0;
 $hvBodySellerUid = 0;
@@ -36,6 +37,9 @@ if (class_exists('Auth', false)) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?= e(base_url()) ?>/assets/css/app.css?v=14">
+  <?php if ($layoutHeadExtra !== '') { ?>
+  <?= $layoutHeadExtra ?>
+  <?php } ?>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.24.0/dist/sweetalert2.min.css" crossorigin="anonymous">
   <?php if (!empty($showCatalogLoader) || !empty($hvAuthLoaderStyles)) { ?>
   <style id="hv-catalog-loader-css"><?php include __DIR__ . '/partials/catalog-loader.css.php'; ?></style>

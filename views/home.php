@@ -163,6 +163,35 @@ $PAGE_SIZE = 40;
         <option value="<?= $scFv ?>"><?= e($scLabelUp) ?></option>
         <?php } ?>
       </select>
+      <style>
+        .ts-wrapper.hv-seller-customer-ts { width: 100%; max-width: 36rem; }
+        .ts-wrapper.hv-seller-customer-ts .ts-control {
+          border-radius: 0.5rem;
+          border: 1px solid rgb(229 231 235);
+          padding: 0.45rem 0.75rem;
+          min-height: 2.5rem;
+          font-size: 0.875rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.025em;
+          color: rgb(17 24 39);
+          box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+        }
+        .ts-wrapper.hv-seller-customer-ts.focus .ts-control {
+          border-color: rgb(248 113 113);
+          box-shadow: 0 0 0 2px rgb(254 226 226);
+        }
+        .ts-wrapper.hv-seller-customer-ts .ts-dropdown .option {
+          text-transform: uppercase;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+        }
+        .ts-wrapper.hv-seller-customer-ts .ts-dropdown {
+          border-radius: 0.5rem;
+          max-height: min(50vh, 22rem);
+        }
+      </style>
       <p id="hv-seller-gate-hint" class="mt-3 text-sm text-amber-800 rounded-lg bg-amber-50 border border-amber-100 px-3 py-2"><?= e($dict['home']['seller_pick_customer_hint']) ?></p>
       <p id="hv-seller-no-customers" class="hidden mt-3 text-sm text-gray-600"><?= e($dict['home']['seller_no_customers']) ?></p>
     </div>
@@ -303,6 +332,9 @@ $PAGE_SIZE = 40;
   </div>
 </div>
 
+<?php if ($hvSellerCatalog) { ?>
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.min.js" crossorigin="anonymous"></script>
+<?php } ?>
 <script>
 (function(){
   var products = <?= $productsJson ?? '[]' ?>;
@@ -668,7 +700,11 @@ $PAGE_SIZE = 40;
       HV.cart.setSellerCustomerFvId('');
       id = '';
     }
-    sel.value = id || '';
+    var next = id || '';
+    sel.value = next;
+    if (sel.tomselect) {
+      sel.tomselect.setValue(next, true);
+    }
   }
 
   var sellerCatalogSyncingFromServer = false;
@@ -739,6 +775,17 @@ $PAGE_SIZE = 40;
     var selCust = document.getElementById('hv-seller-customer-select');
     if (selCust) {
       syncSellerSelectFromStorage();
+      if (typeof TomSelect !== 'undefined' && !selCust.tomselect) {
+        var tsPh = (dict.home && dict.home.seller_customer_search_placeholder) ? String(dict.home.seller_customer_search_placeholder) : '';
+        new TomSelect(selCust, {
+          allowEmptyOption: true,
+          create: false,
+          maxOptions: null,
+          wrapperClass: 'hv-seller-customer-ts',
+          dropdownParent: document.body,
+          placeholder: tsPh
+        });
+      }
       selCust.addEventListener('change', function () {
         HV.cart.setSellerCustomerFvId(selCust.value);
         updateSellerGate();
@@ -1326,4 +1373,7 @@ $PAGE_SIZE = 40;
 <?php
 $content = ob_get_clean();
 $pageTitle = $dict['seo']['title'];
+$layoutHeadExtra = !empty($hvSellerCatalog)
+  ? '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" crossorigin="anonymous">'
+  : '';
 require __DIR__ . '/layout.php';

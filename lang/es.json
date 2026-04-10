@@ -56,6 +56,7 @@
     "moq_label": "MOQ:",
     "seller_select_customer": "Seleccione un cliente",
     "seller_customer_placeholder": "Elija un cliente…",
+    "seller_customer_search_placeholder": "Buscar por nombre o negocio…",
     "seller_pick_customer_hint": "Seleccione un cliente para ver el catálogo con precios y datos aplicables a ese cliente.",
     "seller_no_customers": "No hay clientes asignados a su cuenta de vendedor en esta compañía.",
     "seller_customer_details_title": "Datos del cliente",
