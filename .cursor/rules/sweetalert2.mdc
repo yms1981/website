@@ -1,0 +1,14 @@
+---
+description: Mensajes y diálogos con SweetAlert2 vía HV.*
+alwaysApply: true
+---
+
+# SweetAlert2 (mensajes en el front)
+
+- No uses `alert()`, `confirm()` ni `prompt()` del navegador en páginas que carguen el layout estándar. SweetAlert2 se carga en `views/layout.php`.
+- Usa las helpers globales en `assets/js/hv-ui.js`:
+  - **Toasts**: `HV.toast(mensaje)` o `HV.toast(mensaje, { icon: 'success'|'error'|'warning'|'info', timer: ms })`.
+  - **Confirmación**: `HV.confirm({ text: '…', icon: 'warning' }).then(function (ok) { if (ok) { … } })`.
+  - **Alerta modal**: `HV.alert(mensaje, { icon: 'error' })` (devuelve Promise).
+- Textos de botones: vienen de `window.HV_SWAL_I18N` (`common.confirm` / `common.cancel` en idioma actual).
+- Si añades una vista sin layout o un script aislado, o bien incluye SweetAlert2 + `hv-ui.js`, o deja un fallback explícito a APIs nativas solo en ese contexto documentado.

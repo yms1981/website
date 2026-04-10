@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /en/admin/
+Disallow: /es/admin/
+Disallow: /en/account/
+Disallow: /es/account/
+
+Sitemap: https://hv-website-phi.vercel.app/sitemap.xml
